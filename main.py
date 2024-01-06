@@ -1,5 +1,6 @@
 import pygame as pg
-from tkinter import Tk, filedialog
+import tkinter as tk
+from tkinter import Tk, filedialog, Button
 import sys
 from object_3d import *
 from camera import *
@@ -14,20 +15,48 @@ class SoftwareRender:
         self.FPS = 60
         self.screen = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
+        #Tkinter root window (invisible)
+        self.root = tk.Tk()
+        self.root.withdraw()  # The root window is hidden initially
 
+        #Checkboxes
         self.rotateX_checkbox_rect = pg.Rect(150, 45, 30, 30)
         self.rotateX_checked = False
         self.rotateY_checkbox_rect = pg.Rect(150, 75, 30, 30)
         self.rotateY_checked = False
         self.rotateZ_checkbox_rect = pg.Rect(150, 105, 30, 30)
         self.rotateZ_checked = False
+        
+        #Buttons
         self.openFile_buttonRect = pg.Rect(25, 10, 150, 35)
+        self.showHelp_buttonRect = pg.Rect(25, 500, 150, 35)
         self.resetObj_buttonRect = pg.Rect(25, 140, 150, 35)
+
         self.font = pg.font.Font(None, 36)
         self.skybox_image = pg.image.load("skybox.jpg")  # Replace with your skybox image path
         self.skybox_image = pg.transform.scale(self.skybox_image, (900, 600))
         self.create_objects()
         
+    def show_help(self):
+        # Create and configure the popup window
+        popup = tk.Toplevel(self.root)
+        popup.title("Help")
+        popup.geometry("300x200")  # Adjust the size as needed
+
+        # Add text to the popup
+        help_text = "Controls:\n W - move forward\n A - move left \n S - move backward \n D - move right \n Q - move up \n E - move down \n R - return camera to starting position"
+        text_label = tk.Label(popup, text=help_text)
+        text_label.pack(pady=10)
+
+        # Bind a click event to close the popup
+        popup.bind("<Button-1>", lambda event: popup.withdraw())
+
+        # Make the root window visible (required for the popup to show)
+        self.root.deiconify()
+
+        # Run the Tkinter main loop (this will keep your pygame loop running as well)
+        self.root.mainloop()
+
     def create_objects(self):
         self.camera = Camera(self, [-1, 6, -30])
         self.projection = Projection(self)
@@ -35,7 +64,7 @@ class SoftwareRender:
         self.object.rotate_y(-math.pi / 4)
         self.object.translate([0, 0, 0])
 
-# Reading the .obj file
+    # Reading the .obj (and .mtl, if exists) file
     def get_object_from_file(self, filename):
         vertices, faces_inst, materials = [], [], {}
         root, _ = os.path.splitext(filename)
@@ -101,8 +130,10 @@ class SoftwareRender:
                         self.object.reset()
                     elif self.openFile_buttonRect.collidepoint(event.pos):
                         self.show_file_dialog()
+                    elif self.showHelp_buttonRect.collidepoint(event.pos):
+                        self.show_help()
 
-            # Draw the checkbox
+            # Draw the checkboxes
             pg.draw.rect(self.screen, 'gray', self.rotateX_checkbox_rect, 0)
             pg.draw.rect(self.screen, 'black', self.rotateX_checkbox_rect, 2)
             pg.draw.rect(self.screen, 'gray', self.rotateY_checkbox_rect, 0)
@@ -129,13 +160,18 @@ class SoftwareRender:
                 pg.draw.line(self.screen, 'black', (self.rotateZ_checkbox_rect.centerx - 5, self.rotateZ_checkbox_rect.bottom - 5),
                                 (self.rotateZ_checkbox_rect.right - 5, self.rotateZ_checkbox_rect.top + 5), 2)
             
-            # Draw button
+            # Draw buttons
             pg.draw.rect(self.screen, (0, 128, 255), self.openFile_buttonRect)
             self.draw_text("Select File", (255, 255, 255), (self.openFile_buttonRect.x + 8, self.openFile_buttonRect.y + 8))
 
             pg.draw.rect(self.screen, (0, 128, 255), self.resetObj_buttonRect)
             self.draw_text("Reset object", (255, 255, 255), (self.resetObj_buttonRect.x + 8, self.resetObj_buttonRect.y + 8))
+            
+            #Button to show the help popup
+            pg.draw.rect(self.screen, (0, 128, 255), self.showHelp_buttonRect)
+            self.draw_text("Help", (255, 255, 255), (self.showHelp_buttonRect.x + 5, self.showHelp_buttonRect.y + 5))
 
+            #Draw labels
             self.draw_text("Discovered material count: " + str(self.object.materials_count), (255, 255, 255), (self.openFile_buttonRect.x + 500, self.openFile_buttonRect.y + 5))
             self.draw_text("Polygon count: " + str(self.object.polygon_count), (255, 255, 255), (self.openFile_buttonRect.x + 620, self.openFile_buttonRect.y + 35))
             self.draw_text("FPS: " + str(round(self.clock.get_fps())), (255, 255, 255), (self.openFile_buttonRect.x + 760, self.openFile_buttonRect.y + 65))
@@ -143,7 +179,7 @@ class SoftwareRender:
             pg.display.set_caption("3d Object Viewer")
             pg.display.flip()
             self.clock.tick(self.FPS)
-        
+
 if __name__ == '__main__':
     app = SoftwareRender()
     app.run()

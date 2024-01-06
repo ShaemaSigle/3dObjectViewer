@@ -41,22 +41,25 @@ class SoftwareRender:
         root, _ = os.path.splitext(filename)
         mtl_filename = root + ".mtl"
         current_material = None
-
-        with open(mtl_filename) as mtl_file:
-            for line in mtl_file:
-                if line.startswith('newmtl'):
-                    current_material = line.split()[1]
-                    materials[current_material] = pg.Color('red')  # Default color, change if needed
-                elif line.startswith('Kd'):
-                    rgb_values = [float(value) * 255 for value in line.split()[1:]]
-                    # print(rgb_values)
-                    materials[current_material] = rgb_values
-
+        if os.path.exists(mtl_filename):
+            with open(mtl_filename) as mtl_file:
+                for line in mtl_file:
+                    if line.startswith('newmtl'):
+                        current_material = line.split()[1]
+                        materials[current_material] = pg.Color('red')  # Default color, change if needed
+                    elif line.startswith('Kd'):
+                        rgb_values = [float(value) * 255 for value in line.split()[1:]]
+                        print(current_material, rgb_values)
+                        materials[current_material] = rgb_values
+        else: 
+            #In case there is no .mtl file, a default material is used
+            current_material_name = "default"
+            materials["default"] = [0,0,0]
         with open(filename) as f:
             for line in f:
                 if line.startswith('v '):
                     vertices.append([float(i) for i in line.split()[1:]] + [1])
-                elif line.startswith('usemtl'):
+                elif line.startswith('usemtl') and os.path.exists(mtl_filename):
                     current_material_name = line.split()[1]
                 elif line.startswith('f'):
                     faces_ = line.split()[1:]

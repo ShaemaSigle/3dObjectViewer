@@ -24,7 +24,7 @@ class Camera:
         key = pg.key.get_pressed()
         #Resetting the camera in case user gets lost
         if key[pg.K_r]:
-            self.position = np.array([*[-5, 6, -30], 1.0])
+            self.position = np.array([*[-1, 6, -30], 1.0])
             self.anglePitch = 0
             self.angleYaw = 0
             self.angleRoll = 0

@@ -19,8 +19,15 @@ class Camera:
         self.angleYaw = 0
         self.angleRoll = 0
 
+    #Moving the camera around using keyboard
     def control(self):
         key = pg.key.get_pressed()
+        #Resetting the camera in case user gets lost
+        if key[pg.K_r]:
+            self.position = np.array([*[-5, 6, -30], 1.0])
+            self.anglePitch = 0
+            self.angleYaw = 0
+            self.angleRoll = 0
         if key[pg.K_a]:
             self.position -= self.right * self.moving_speed
         if key[pg.K_d]:
@@ -33,28 +40,21 @@ class Camera:
             self.position += self.up * self.moving_speed
         if key[pg.K_e]:
             self.position -= self.up * self.moving_speed
-
         if key[pg.K_LEFT]:
-            self.camera_yaw(-self.rotation_speed)
+            self.angleYaw -= self.rotation_speed
         if key[pg.K_RIGHT]:
-            self.camera_yaw(self.rotation_speed)
+            self.angleYaw += self.rotation_speed
         if key[pg.K_UP]:
-            self.camera_pitch(-self.rotation_speed)
+            self.anglePitch -= self.rotation_speed
         if key[pg.K_DOWN]:
-            self.camera_pitch(self.rotation_speed)
-
-    def camera_yaw(self, angle):
-        self.angleYaw += angle
-
-    def camera_pitch(self, angle):
-        self.anglePitch += angle
+            self.anglePitch += self.rotation_speed
 
     def axiiIdentity(self):
         self.forward = np.array([0, 0, 1, 1])
         self.up = np.array([0, 1, 0, 1])
         self.right = np.array([1, 0, 0, 1])
 
-    def camera_update_axii(self):
+    def camera_update_axii(self): 
         rotate = rotate_x(self.anglePitch) @ rotate_y(self.angleYaw)  # this concatenation gives right visual
         self.axiiIdentity()
         self.forward = self.forward @ rotate

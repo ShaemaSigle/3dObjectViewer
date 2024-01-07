@@ -1,0 +1,4 @@
+Pygame 2.5.2
+Numpy 1.26.3
+Numba 0.58.1
+aspose-3d 23.12.0

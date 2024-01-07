@@ -1,7 +1,6 @@
 import pygame as pg
-from matrix_functions import *
 from numba import njit
-from projection import *
+from matrix_functionality import *
 
 #Used to speed up calculations
 @njit(fastmath=True)

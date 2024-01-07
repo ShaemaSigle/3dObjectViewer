@@ -1,14 +1,13 @@
 import pygame as pg
-import tkinter as tk
-from tkinter import Tk, filedialog, Button
+from tkinter import Tk, filedialog
 import sys
 from object_3d import *
 from camera import *
-from projection import *
+from matrix_functionality import *
 import os
-from threading import Thread
+import aspose.threed as a3d
 
-class SoftwareRender:
+class Renderer:
     def __init__(self):
         pg.init()
         self.RES = self.WIDTH, self.HEIGHT = 900, 600
@@ -58,7 +57,6 @@ class SoftwareRender:
                         materials[current_material] = pg.Color('black')  # Default color, used if the material has no Kd line
                     elif line.startswith('Kd'):
                         rgb_values = [float(value) * 255 for value in line.split()[1:]]
-                        print(current_material, rgb_values)
                         materials[current_material] = rgb_values
         else: 
             #In case there is no .mtl file, a default material is used since it is needed to create a Face instance
@@ -74,7 +72,8 @@ class SoftwareRender:
                     faces_ = line.split()[1:]
                     faces_inst.append(Face([int(face_.split('/')[0]) - 1 for face_ in faces_], current_material_name))
         return Object3D(self, vertices, faces_inst, materials)
-
+    
+    #Opening a new 3d object
     def show_file_dialog(self):
         root = Tk()
         root.withdraw()  # Hide the main window
@@ -82,6 +81,17 @@ class SoftwareRender:
         root.destroy()  # Close the hidden window
         if file_path and file_path.endswith(".obj"):
             self.object = self.get_object_from_file(file_path)
+        #If it's a .fbx or .3ds file, it should first be converted to .obj using aspose
+        elif file_path and (file_path.endswith(".fbx") or file_path.endswith(".3ds")):
+            scene = a3d.Scene.from_file(file_path)
+            root, _ = os.path.splitext(file_path)
+            obj_filename = root + ".obj"
+            scene.save(obj_filename)
+            self.object = self.get_object_from_file(obj_filename)
+            if(file_path.endswith(".fbx")):
+                #.fbx objects get scaled up a lot after conversion, so we need to account for that and scale them down
+                self.object.scale(0.02)
+                self.object.vertices_untouched = self.object.vertices
 
     def draw_text(self, text, color, position):
         surface = self.font.render(text, True, color)
@@ -93,8 +103,8 @@ class SoftwareRender:
 
     def run(self):
         while True:
-            self.draw()
-            self.camera.control()
+            self.draw() #drawing skybox and the opened 3d object
+            self.camera.control() #enabling camera controls
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
@@ -167,14 +177,20 @@ class SoftwareRender:
             self.draw_text("Help", (255, 255, 255), (self.showHelp_buttonRect.x + 5, self.showHelp_buttonRect.y + 5))
 
             #Draw labels
-            self.draw_text("Discovered material count: " + str(self.object.materials_count), (255, 255, 255), (self.openFile_buttonRect.x + 560, self.openFile_buttonRect.y + 5))
-            self.draw_text("Polygon count: " + str(self.object.polygon_count), (255, 255, 255), (self.openFile_buttonRect.x + 630, self.openFile_buttonRect.y + 35))
-            self.draw_text("FPS: " + str(round(self.clock.get_fps())), (255, 255, 255), (self.openFile_buttonRect.x + 780, self.openFile_buttonRect.y + 560))
+            self.draw_text("Discovered material count: " + str(self.object.materials_count), 
+                           (255, 255, 255), 
+                           (self.openFile_buttonRect.x + 560, self.openFile_buttonRect.y + 5))
+            self.draw_text("Polygon count: " + str(self.object.polygon_count), 
+                           (255, 255, 255), 
+                           (self.openFile_buttonRect.x + 630, self.openFile_buttonRect.y + 35))
+            self.draw_text("FPS: " + str(round(self.clock.get_fps())), 
+                           (255, 255, 255), 
+                           (self.openFile_buttonRect.x + 780, self.openFile_buttonRect.y + 560))
             
             pg.display.set_caption("3d Object Viewer")
             pg.display.flip()
             self.clock.tick(self.FPS)
 
 if __name__ == '__main__':
-    app = SoftwareRender()
+    app = Renderer()
     app.run()

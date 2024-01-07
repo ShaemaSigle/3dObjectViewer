@@ -3,7 +3,7 @@ from matrix_functions import *
 from numba import njit
 from projection import *
 
-
+#Used to speed up calculations
 @njit(fastmath=True)
 def any_func(arr, a, b):
     return np.any((arr == a) | (arr == b))
@@ -11,7 +11,7 @@ def any_func(arr, a, b):
 class Object3D:
     def __init__(self, render, vertices='', faces='', materials=None):
         self.render = render
-        self.vertices_untouched = np.array(vertices)
+        self.vertices_untouched = np.array(vertices) #Needed to reset the object after any transformations
         self.vertices = np.array(vertices)
         self.faces = faces
         self.translate([0.0001, 0.0001, 0.0001])
@@ -30,6 +30,7 @@ class Object3D:
         self.screen_projection()
 
     def movement(self, x, y, z):
+        #Currently the only movement used is rotation, but it can be changed here
         if self.movement_flag:
             if x: self.rotate_x(-(pg.time.get_ticks() % 0.005))
             if y: self.rotate_y(-(pg.time.get_ticks() % 0.005))
@@ -37,7 +38,8 @@ class Object3D:
 
     def reset(self):
         self.vertices = self.vertices_untouched
-
+    
+    #All vertices need to be projected onto the screen to be displayed correctly
     def screen_projection(self):
         vertices = self.vertices @ self.render.camera.camera_matrix()
         vertices = vertices @ self.render.projection.projection_matrix
@@ -64,7 +66,8 @@ class Object3D:
             for vertex in vertices:
                 if all(0 <= vertex < [self.render.WIDTH, self.render.HEIGHT]):
                     pg.draw.circle(self.render.screen, pg.Color('white'), vertex.astype(int), 2)
-
+    
+    #Move object to coordinates
     def translate(self, pos):
         self.vertices = self.vertices @ translate(pos)
 

@@ -8,7 +8,35 @@ import os
 import aspose.threed as a3d
 
 class Renderer:
+    """
+    3D Object Viewer Application using Pygame and Tkinter.
+
+    This class initializes the application, manages the rendering loop, and handles user interactions.
+
+    Attributes:
+    - RES: Screen resolution tuple (WIDTH, HEIGHT).
+    - H_WIDTH, H_HEIGHT: Half of the screen resolution.
+    - FPS: Frames per second.
+    - screen: Pygame screen surface.
+    - clock: Pygame clock for controlling frame rate.
+    - show_help: Boolean flag to control the display of help text.
+    - rotateX_checkbox_rect, rotateY_checkbox_rect, rotateZ_checkbox_rect: Pygame Rectangles for checkboxes.
+    - rotateX_checked, rotateY_checked, rotateZ_checked: Boolean flags for checkbox states.
+    - openFile_buttonRect, resetObj_buttonRect, showHelp_buttonRect: Pygame Rectangles for buttons.
+    - font: Pygame font for text rendering.
+    - skybox_image: Background image.
+    - camera: Instance of the Camera class for managing the viewpoint.
+    - projection: Instance of the Projection class for handling projection.
+    - object: Instance of the Object3D class representing the 3D object to be displayed.
+    """
     def __init__(self):
+        """
+        Initialize the Renderer application.
+
+        - Initializes Pygame and sets up screen properties.
+        - Creates UI elements such as checkboxes, buttons, and initializes fonts.
+        - Calls create_objects to set up the 3D objects in the scene.
+        """
         pg.init()
         self.RES = self.WIDTH, self.HEIGHT = 900, 600
         self.H_WIDTH, self.H_HEIGHT = self.WIDTH // 2, self.HEIGHT // 2
@@ -36,15 +64,27 @@ class Renderer:
         self.create_objects()
         
     def create_objects(self):
+        """
+        Initialize the 3D objects in the scene.
+
+        - Creates instances of Camera, Projection, and loads a 3D object from the file.
+        - Applies initial transformations to the loaded object.
+        """
         self.camera = Camera(self, [-1, 6, -30])
         self.projection = Projection(self)
         self.object = self.get_object_from_file('res/Tree.obj')
-        self.object.rotate_y(-math.pi / 4)
         self.object.translate([0, 0, 0])
-
-    # Reading the .obj (and .mtl, if exists) file
-    # Code only takes rgb values from the .mtl file, if there is no Kd line in the material, it will default to black
+ 
     def get_object_from_file(self, filename):
+        """
+        Load a 3D object from a file. Reads the .obj (and .mtl, if exists) file.
+
+        Args:
+        - filename (str): Path to the .obj file.
+
+        Returns:
+        - Object3D: Instance of the Object3D class representing the loaded 3D object.
+        """
         vertices, faces_inst, materials = [], [], {}
         root, _ = os.path.splitext(filename)
         mtl_filename = root + ".mtl"
@@ -73,15 +113,23 @@ class Renderer:
                     faces_inst.append(Face([int(face_.split('/')[0]) - 1 for face_ in faces_], current_material_name))
         return Object3D(self, vertices, faces_inst, materials)
     
-    #Opening a new 3d object
     def show_file_dialog(self):
-        root = Tk()
-        root.withdraw()  # Hide the main window
-        file_path = filedialog.askopenfilename()
-        root.destroy()  # Close the hidden window
+        """
+        Open a file dialog to load a new 3D object.
+
+        - Supports .obj, .fbx, and .3ds file formats.
+        - Converts .fbx and .3ds files to .obj format using Aspose if needed.
+        """
+        file_types = [
+            ("OBJ Files", "*.obj"),
+            ("FBX Files", "*.fbx"),
+            ("3DS Files", "*.3ds"),
+            ("All Files", "*.*")
+        ]
+        file_path = filedialog.askopenfilename(filetypes=file_types)
         if file_path and file_path.endswith(".obj"):
             self.object = self.get_object_from_file(file_path)
-        #If it's a .fbx or .3ds file, it should first be converted to .obj using aspose
+        #If it's a .fbx or .3ds file, it should first be converted to .obj
         elif file_path and (file_path.endswith(".fbx") or file_path.endswith(".3ds")):
             scene = a3d.Scene.from_file(file_path)
             root, _ = os.path.splitext(file_path)
@@ -94,22 +142,38 @@ class Renderer:
                 self.object.vertices_untouched = self.object.vertices
 
     def draw_text(self, text, color, position):
+        """
+        Draw text on the screen.
+
+        Args:
+        - text (str): Text to be rendered.
+        - color (tuple): RGB color tuple.
+        - position (tuple): (x, y) position of the text on the screen.
+        """
         surface = self.font.render(text, True, color)
         self.screen.blit(surface, position)
 
     def draw(self):
+        """
+        Draw the 3D scene and the loaded object on the screen.
+        """
         self.screen.blit(self.skybox_image, (0, 0))
         self.object.draw(self.rotateX_checked, self.rotateY_checked, self.rotateZ_checked)
 
     def run(self):
+        """
+        Main rendering loop for the application.
+
+        - Continuously renders the scene and handles user input.
+        - Manages the display of checkboxes, buttons, and help text.
+        """
         while True:
-            self.draw() #drawing skybox and the opened 3d object
+            self.draw()
             self.camera.control() #enabling camera controls
             for event in pg.event.get():
                 if event.type == pg.QUIT:
                     pg.quit()
                     sys.exit()
-                #All clickable things are handled here
                 elif event.type == pg.MOUSEBUTTONDOWN:
                     if self.rotateX_checkbox_rect.collidepoint(event.pos):
                         self.rotateX_checked = not self.rotateX_checked
@@ -127,7 +191,7 @@ class Renderer:
                         else: 
                             self.show_help = True
 
-            # Draw the checkboxes
+            # Drawing the checkboxes
             pg.draw.rect(self.screen, 'gray', self.rotateX_checkbox_rect, 0)
             pg.draw.rect(self.screen, 'black', self.rotateX_checkbox_rect, 2)
             pg.draw.rect(self.screen, 'gray', self.rotateY_checkbox_rect, 0)
@@ -138,7 +202,7 @@ class Renderer:
             self.draw_text("Rotate (y) ", (255, 255, 255), (self.openFile_buttonRect.x + 5, self.openFile_buttonRect.y + 70))
             self.draw_text("Rotate (z)", (255, 255, 255), (self.openFile_buttonRect.x + 5, self.openFile_buttonRect.y + 100))
             
-            # Draw the checkmark if the checkbox is checked
+            # Drawing the checkmark if the checkbox is checked
             if self.rotateX_checked:
                 pg.draw.line(self.screen, 'black', (self.rotateX_checkbox_rect.left + 5, self.rotateX_checkbox_rect.centery),
                                 (self.rotateX_checkbox_rect.centerx - 5, self.rotateX_checkbox_rect.bottom - 5), 2)
@@ -155,7 +219,7 @@ class Renderer:
                 pg.draw.line(self.screen, 'black', (self.rotateZ_checkbox_rect.centerx - 5, self.rotateZ_checkbox_rect.bottom - 5),
                                 (self.rotateZ_checkbox_rect.right - 5, self.rotateZ_checkbox_rect.top + 5), 2)
                 
-            #Draw the help text if Help button is pressed
+            #Drawing the help text if Help button is pressed
             if self.show_help:
                 lines = ["Controls:", "W - move forward", "A - move left", "S - move backward", 
                          "D - move right", "Q - move up", "E - move down", "R - reset camera",
@@ -165,18 +229,15 @@ class Renderer:
                     sk+=20
                     self.draw_text(line, (255, 255, 255), (self.showHelp_buttonRect.x, self.showHelp_buttonRect.y+sk))
 
-            # Draw buttons
+            # Drawing buttons
             pg.draw.rect(self.screen, (0, 128, 255), self.openFile_buttonRect)
             self.draw_text("Select File", (255, 255, 255), (self.openFile_buttonRect.x + 8, self.openFile_buttonRect.y + 8))
-
             pg.draw.rect(self.screen, (0, 128, 255), self.resetObj_buttonRect)
             self.draw_text("Reset object", (255, 255, 255), (self.resetObj_buttonRect.x + 8, self.resetObj_buttonRect.y + 8))
-            
-            #Button to show the help popup
             pg.draw.rect(self.screen, (0, 128, 255), self.showHelp_buttonRect)
             self.draw_text("Help", (255, 255, 255), (self.showHelp_buttonRect.x + 5, self.showHelp_buttonRect.y + 5))
 
-            #Draw labels
+            #Drawing labels
             self.draw_text("Discovered material count: " + str(self.object.materials_count), 
                            (255, 255, 255), 
                            (self.openFile_buttonRect.x + 560, self.openFile_buttonRect.y + 5))

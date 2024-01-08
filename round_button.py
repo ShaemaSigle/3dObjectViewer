@@ -20,7 +20,7 @@ class RoundButton:
         self.rect = pg.Rect(rect)
         self.color = color
         self.text = text
-        self.text_color = (255, 255, 255)
+        self.text_color = (48, 35, 22)
         self.radius = radius
         self.hover_factor = hover_factor
         self.is_hovered = False

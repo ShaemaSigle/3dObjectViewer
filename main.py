@@ -47,9 +47,9 @@ class Renderer:
         self.show_help, self.rotateX_checked, self.rotateY_checked, self.rotateZ_checked  = False, False, False, False
         
         #Buttons
-        self.openFile_button = RoundButton(self.screen, (25, 10, 150, 35),(0, 128, 255),"Select File")
-        self.resetObj_button = RoundButton(self.screen, (25, 140, 150, 35),(0, 128, 255),"Reset object")
-        self.showHelp_button = RoundButton(self.screen, (25, 180, 150, 35),(0, 128, 255),"Help")
+        self.openFile_button = RoundButton(self.screen, (25, 10, 150, 35),(245, 209, 171),"Select File")
+        self.resetObj_button = RoundButton(self.screen, (25, 140, 150, 35),(245, 209, 171),"Reset object")
+        self.showHelp_button = RoundButton(self.screen, (25, 180, 150, 35),(245, 209, 171),"Help")
         self.rotateX_checkbox = RoundButton(self.screen, (130, 50, 25, 25), (220, 220, 220), '', 0)
         self.rotateY_checkbox = RoundButton(self.screen, (130, 80, 25, 25), (220, 220, 220), '', 0)
         self.rotateZ_checkbox = RoundButton(self.screen, (130, 110, 25, 25), (220, 220, 220), '', 0)
@@ -60,6 +60,7 @@ class Renderer:
         ]
 
         self.font = pg.font.Font(None, 30)
+        self.text_color = (48, 35, 22)
         self.script_dir = os.path.dirname(__file__)
         skybox_path = os.path.join(self.script_dir, "skybox.jpg")
         self.skybox_image = pg.image.load(skybox_path)
@@ -239,9 +240,9 @@ class Renderer:
             pg.draw.rect(self.screen, 'black', self.rotateY_checkbox.rect, 2)
             pg.draw.rect(self.screen, 'black', self.rotateZ_checkbox.rect, 2)
 
-            self.draw_text("Rotate (x) ", (0,0,0), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 40))
-            self.draw_text("Rotate (y) ", (0,0,0), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 70))
-            self.draw_text("Rotate (z)", (0,0,0), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 100))
+            self.draw_text("Rotate (x) ", (self.text_color), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 40))
+            self.draw_text("Rotate (y) ", (self.text_color), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 70))
+            self.draw_text("Rotate (z)", (self.text_color), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 100))
             
             self.draw_checkboxes()
             #Drawing the help text if Help button is pressed
@@ -253,7 +254,7 @@ class Renderer:
                 sk = 20
                 for line in lines:
                     sk+=20
-                    self.draw_text(line, (0, 0, 0), (self.showHelp_button.rect.x, self.showHelp_button.rect.y+sk))
+                    self.draw_text(line, (self.text_color), (self.showHelp_button.rect.x, self.showHelp_button.rect.y+sk))
 
             self.openFile_button.draw()
             self.resetObj_button.draw()
@@ -261,13 +262,13 @@ class Renderer:
 
             #Drawing informational text
             self.draw_text("Discovered material count: " + str(self.object.materials_count), 
-                           (0,0,0), 
+                           (self.text_color), 
                            (self.openFile_button.rect.x + 560, self.openFile_button.rect.y + 5))
             self.draw_text("Polygon count: " + str(self.object.polygon_count), 
-                           (0,0,0), 
+                           (self.text_color), 
                            (self.openFile_button.rect.x + 630, self.openFile_button.rect.y + 35))
             self.draw_text("FPS: " + str(round(self.clock.get_fps())), 
-                           (0,0,0), 
+                           (self.text_color), 
                            (self.openFile_button.rect.x + 780, self.openFile_button.rect.y + 560))
             
             pg.display.set_caption("3d Object Viewer")

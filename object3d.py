@@ -17,17 +17,21 @@ class Object3D:
         - vertices (list): List of vertices defining the object.
         - faces (list): List of faces defining the object.
         - materials (dict): Dictionary of materials associated with the object's faces.
+
+        Attributes worth mentioning:
+        - vertices_untouched (numpy array): unchanged vertices to reset the object after any transformations
+        - movement_flag: Boolean flag for applying movement
         """
         self.render = render
-        self.vertices_untouched = np.array(vertices) #Needed to reset the object after any transformations
+        self.materials = materials
+        self.vertices_untouched = np.array(vertices) 
         self.vertices = np.array(vertices)
         self.faces = faces
         self.translate([0.0001, 0.0001, 0.0001])
         self.polygon_count = len(faces)
         self.materials_count = len(materials)
         self.font = pg.font.SysFont('Arial', 30, bold=True)
-        self.color_faces = [(pg.Color(materials[face.material_name]), face) for face in self.faces]
-        self.movement_flag, self.draw_vertices = False, False
+        self.movement_flag = False
         self.label = ''
     
     def draw(self, rotateX, rortateY, rotateZ):
@@ -76,8 +80,8 @@ class Object3D:
         vertices = vertices @ self.render.projection.to_screen_matrix
         vertices = vertices[:, :2]
 
-        for index, color_face in enumerate(self.color_faces):
-            color, face = color_face
+        for index, face in enumerate(self.faces):
+            color, face = pg.Color(self.materials[face.material_name]), face
             polygon = vertices[face.vertices]
             if not any_func(polygon, self.render.H_WIDTH, self.render.H_HEIGHT):
                 pg.draw.polygon(self.render.screen, color, polygon, 2)
@@ -86,11 +90,6 @@ class Object3D:
                     text = self.font.render(self.label[index], True, pg.Color('white'))
                     self.render.screen.blit(text, polygon[-1])
 
-        if self.draw_vertices:
-            for vertex in vertices:
-                if all(0 <= vertex < [self.render.WIDTH, self.render.HEIGHT]):
-                    pg.draw.circle(self.render.screen, pg.Color('white'), vertex.astype(int), 2)
-    
     def translate(self, pos):
         """
         Translate the object to a specified position.

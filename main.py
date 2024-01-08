@@ -1,9 +1,10 @@
 import pygame as pg
 from tkinter import Tk, filedialog
 import sys
-from object_3d import *
+from object3d import *
 from camera import *
 from matrix_functionality import *
+from round_button import *
 import os
 import aspose.threed as a3d
 
@@ -15,15 +16,15 @@ class Renderer:
 
     Attributes:
     - RES: Screen resolution tuple (WIDTH, HEIGHT).
-    - H_WIDTH, H_HEIGHT: Half of the screen resolution.
-    - FPS: Frames per second.
+    - H_WIDTH, H_HEIGHT: Half of the screen resolution. 
     - screen: Pygame screen surface.
     - clock: Pygame clock for controlling frame rate.
     - show_help: Boolean flag to control the display of help text.
     - rotateX_checkbox_rect, rotateY_checkbox_rect, rotateZ_checkbox_rect: Pygame Rectangles for checkboxes.
     - rotateX_checked, rotateY_checked, rotateZ_checked: Boolean flags for checkbox states.
-    - openFile_buttonRect, resetObj_buttonRect, showHelp_buttonRect: Pygame Rectangles for buttons.
+    - openFile_button, resetObj_button, showHelp_button: Instances of RoundButton class.
     - font: Pygame font for text rendering.
+    - script_dir: Script directory for locating resources
     - skybox_image: Background image.
     - camera: Instance of the Camera class for managing the viewpoint.
     - projection: Instance of the Projection class for handling projection.
@@ -40,7 +41,7 @@ class Renderer:
         pg.init()
         self.RES = self.WIDTH, self.HEIGHT = 900, 600
         self.H_WIDTH, self.H_HEIGHT = self.WIDTH // 2, self.HEIGHT // 2
-        self.FPS = 120
+        self.FPS = 60
         self.screen = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
         self.show_help = False
@@ -54,12 +55,14 @@ class Renderer:
         self.rotateZ_checked = False
         
         #Buttons
-        self.openFile_buttonRect = pg.Rect(25, 10, 150, 35)
-        self.resetObj_buttonRect = pg.Rect(25, 140, 150, 35)
-        self.showHelp_buttonRect = pg.Rect(25, 200, 150, 35)
+        self.openFile_button = RoundButton(self.screen, (25, 10, 150, 35),"Select File")
+        self.resetObj_button = RoundButton(self.screen, (25, 140, 150, 35),"Reset object")
+        self.showHelp_button = RoundButton(self.screen, (25, 180, 150, 35),"Help")
 
         self.font = pg.font.Font(None, 30)
-        self.skybox_image = pg.image.load("skybox.jpg")  # Replace with your skybox image path
+        self.script_dir = os.path.dirname(__file__)
+        skybox_path = os.path.join(self.script_dir, "skybox.jpg")
+        self.skybox_image = pg.image.load(skybox_path)
         self.skybox_image = pg.transform.scale(self.skybox_image, (900, 600))
         self.create_objects()
         
@@ -72,7 +75,8 @@ class Renderer:
         """
         self.camera = Camera(self, [-1, 6, -30])
         self.projection = Projection(self)
-        self.object = self.get_object_from_file('res/Tree.obj')
+        obj_path = os.path.join(self.script_dir, 'res/Tree.obj')
+        self.object = self.get_object_from_file(obj_path)
         self.object.translate([0, 0, 0])
  
     def get_object_from_file(self, filename):
@@ -113,7 +117,7 @@ class Renderer:
                     faces_inst.append(Face([int(face_.split('/')[0]) - 1 for face_ in faces_], current_material_name))
         return Object3D(self, vertices, faces_inst, materials)
     
-    def show_file_dialog(self):
+    def open_new_file(self):
         """
         Open a file dialog to load a new 3D object.
 
@@ -140,6 +144,8 @@ class Renderer:
                 #.fbx objects get scaled up a lot after conversion, so we need to account for that and scale them down
                 self.object.scale(0.02)
                 self.object.vertices_untouched = self.object.vertices
+            else:
+                self.camera.reset_cam_position()
 
     def draw_text(self, text, color, position):
         """
@@ -181,15 +187,29 @@ class Renderer:
                         self.rotateY_checked = not self.rotateY_checked
                     elif self.rotateZ_checkbox_rect.collidepoint(event.pos):
                         self.rotateZ_checked = not self.rotateZ_checked
-                    elif self.resetObj_buttonRect.collidepoint(event.pos):
+                    elif self.resetObj_button.rect.collidepoint(event.pos):
                         self.object.reset()
-                    elif self.openFile_buttonRect.collidepoint(event.pos):
-                        self.show_file_dialog()
-                    elif self.showHelp_buttonRect.collidepoint(event.pos):
+                    elif self.openFile_button.rect.collidepoint(event.pos):
+                        self.open_new_file()
+                    elif self.showHelp_button.rect.collidepoint(event.pos):
                         if self.show_help:
                             self.show_help = False
                         else: 
                             self.show_help = True
+                elif event.type == pg.MOUSEMOTION:
+                    if self.openFile_button.rect.collidepoint(event.pos):
+                        self.openFile_button.is_hovered = True
+                    else:
+                        self.openFile_button.is_hovered = False
+                    if self.resetObj_button.rect.collidepoint(event.pos):
+                        self.resetObj_button.is_hovered = True
+                    else:
+                        self.resetObj_button.is_hovered = False
+                    if self.showHelp_button.rect.collidepoint(event.pos):
+                        self.showHelp_button.is_hovered = True
+                    else:
+                        self.showHelp_button.is_hovered = False
+
 
             # Drawing the checkboxes
             pg.draw.rect(self.screen, 'gray', self.rotateX_checkbox_rect, 0)
@@ -198,9 +218,9 @@ class Renderer:
             pg.draw.rect(self.screen, 'black', self.rotateY_checkbox_rect, 2)
             pg.draw.rect(self.screen, 'gray', self.rotateZ_checkbox_rect, 0)
             pg.draw.rect(self.screen, 'black', self.rotateZ_checkbox_rect, 2)
-            self.draw_text("Rotate (x) ", (255, 255, 255), (self.openFile_buttonRect.x + 5, self.openFile_buttonRect.y + 40))
-            self.draw_text("Rotate (y) ", (255, 255, 255), (self.openFile_buttonRect.x + 5, self.openFile_buttonRect.y + 70))
-            self.draw_text("Rotate (z)", (255, 255, 255), (self.openFile_buttonRect.x + 5, self.openFile_buttonRect.y + 100))
+            self.draw_text("Rotate (x) ", (255, 255, 255), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 40))
+            self.draw_text("Rotate (y) ", (255, 255, 255), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 70))
+            self.draw_text("Rotate (z)", (255, 255, 255), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 100))
             
             # Drawing the checkmark if the checkbox is checked
             if self.rotateX_checked:
@@ -227,26 +247,22 @@ class Renderer:
                 sk = 20
                 for line in lines:
                     sk+=20
-                    self.draw_text(line, (255, 255, 255), (self.showHelp_buttonRect.x, self.showHelp_buttonRect.y+sk))
+                    self.draw_text(line, (255, 255, 255), (self.showHelp_button.rect.x, self.showHelp_button.rect.y+sk))
 
-            # Drawing buttons
-            pg.draw.rect(self.screen, (0, 128, 255), self.openFile_buttonRect)
-            self.draw_text("Select File", (255, 255, 255), (self.openFile_buttonRect.x + 8, self.openFile_buttonRect.y + 8))
-            pg.draw.rect(self.screen, (0, 128, 255), self.resetObj_buttonRect)
-            self.draw_text("Reset object", (255, 255, 255), (self.resetObj_buttonRect.x + 8, self.resetObj_buttonRect.y + 8))
-            pg.draw.rect(self.screen, (0, 128, 255), self.showHelp_buttonRect)
-            self.draw_text("Help", (255, 255, 255), (self.showHelp_buttonRect.x + 5, self.showHelp_buttonRect.y + 5))
+            self.openFile_button.draw()
+            self.resetObj_button.draw()
+            self.showHelp_button.draw()
 
             #Drawing labels
             self.draw_text("Discovered material count: " + str(self.object.materials_count), 
                            (255, 255, 255), 
-                           (self.openFile_buttonRect.x + 560, self.openFile_buttonRect.y + 5))
+                           (self.openFile_button.rect.x + 560, self.openFile_button.rect.y + 5))
             self.draw_text("Polygon count: " + str(self.object.polygon_count), 
                            (255, 255, 255), 
-                           (self.openFile_buttonRect.x + 630, self.openFile_buttonRect.y + 35))
+                           (self.openFile_button.rect.x + 630, self.openFile_button.rect.y + 35))
             self.draw_text("FPS: " + str(round(self.clock.get_fps())), 
                            (255, 255, 255), 
-                           (self.openFile_buttonRect.x + 780, self.openFile_buttonRect.y + 560))
+                           (self.openFile_button.rect.x + 780, self.openFile_button.rect.y + 560))
             
             pg.display.set_caption("3d Object Viewer")
             pg.display.flip()

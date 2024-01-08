@@ -27,15 +27,15 @@ class Projection:
         TOP = math.tan(render.camera.v_fov / 2)
         BOTTOM = -TOP
 
-        m00 = 2 / (RIGHT - LEFT)
-        m11 = 2 / (TOP - BOTTOM)
-        m22 = (FAR + NEAR) / (FAR - NEAR)
-        m32 = -2 * NEAR * FAR / (FAR - NEAR)
+        a00 = 2 / (RIGHT - LEFT)
+        a11 = 2 / (TOP - BOTTOM)
+        a22 = (FAR + NEAR) / (FAR - NEAR)
+        a32 = -2 * NEAR * FAR / (FAR - NEAR)
         self.projection_matrix = np.array([
-            [m00, 0, 0, 0],
-            [0, m11, 0, 0],
-            [0, 0, m22, 1],
-            [0, 0, m32, 0]
+            [a00, 0, 0, 0],
+            [0, a11, 0, 0],
+            [0, 0, a22, 1],
+            [0, 0, a32, 0]
         ])
 
         HW, HH = render.H_WIDTH, render.H_HEIGHT
@@ -47,7 +47,6 @@ class Projection:
         ])
 
 def translate(pos):
-    print(type(pos))
     """
     Generate a 4x4 translation matrix for a given position.
 

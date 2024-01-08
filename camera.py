@@ -26,6 +26,13 @@ class Camera:
         self.angleYaw = 0
         self.angleRoll = 0
 
+    def reset_cam_position(self):
+        #Reset camera position and rotation to the starting point.
+        self.position = np.array([*[-1, 6, -30], 1.0])
+        self.anglePitch = 0
+        self.angleYaw = 0
+        self.angleRoll = 0
+
     def control(self):
         """
         Control the camera movement and orientation based on keyboard input.
@@ -44,10 +51,7 @@ class Camera:
         """
         key = pg.key.get_pressed()
         if key[pg.K_r]:
-            self.position = np.array([*[-1, 6, -30], 1.0])
-            self.anglePitch = 0
-            self.angleYaw = 0
-            self.angleRoll = 0
+            self.reset_cam_position()
         if key[pg.K_a]:
             self.position -= self.right * self.moving_speed
         if key[pg.K_d]:

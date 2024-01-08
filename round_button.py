@@ -15,10 +15,10 @@ class RoundButton:
     Methods:
     - draw: Draw the button on the screen.
     """
-    def __init__(self, screen, rect, text, radius=15, hover_factor=0.7):
+    def __init__(self, screen, rect, color, text='', radius=10, hover_factor=0.7):
         self.screen = screen
         self.rect = pg.Rect(rect)
-        self.color = (0, 128, 255)
+        self.color = color
         self.text = text
         self.text_color = (255, 255, 255)
         self.radius = radius
@@ -31,9 +31,9 @@ class RoundButton:
             pg.draw.rect(self.screen, hover_color, self.rect, border_radius=self.radius)
         else:
             pg.draw.rect(self.screen, self.color, self.rect, border_radius=self.radius)
-
-        # Draw text
-        font = pg.font.Font(None, 36)
-        text_surface = font.render(self.text, True, self.text_color)
-        text_rect = text_surface.get_rect(center=self.rect.center)
-        self.screen.blit(text_surface, text_rect)
+        if self.text != '':
+            # Draw text
+            font = pg.font.Font(None, 36)
+            text_surface = font.render(self.text, True, self.text_color)
+            text_rect = text_surface.get_rect(center=self.rect.center)
+            self.screen.blit(text_surface, text_rect)

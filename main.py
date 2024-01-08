@@ -44,20 +44,26 @@ class Renderer:
         self.FPS = 60
         self.screen = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
-        self.show_help = False
 
         #Checkboxes
-        self.rotateX_checkbox_rect = pg.Rect(130, 50, 25, 25)
-        self.rotateX_checked = False
-        self.rotateY_checkbox_rect = pg.Rect(130, 80, 25, 25)
-        self.rotateY_checked = False
-        self.rotateZ_checkbox_rect = pg.Rect(130, 110, 25, 25)
-        self.rotateZ_checked = False
+        # self.rotateX_checkbox_rect = pg.Rect(130, 50, 25, 25)
+        # self.rotateY_checkbox_rect = pg.Rect(130, 80, 25, 25)
+        # self.rotateZ_checkbox_rect = pg.Rect(130, 110, 25, 25)
+
+        self.show_help, self.rotateX_checked, self.rotateY_checked, self.rotateZ_checked  = False, False, False, False
         
         #Buttons
-        self.openFile_button = RoundButton(self.screen, (25, 10, 150, 35),"Select File")
-        self.resetObj_button = RoundButton(self.screen, (25, 140, 150, 35),"Reset object")
-        self.showHelp_button = RoundButton(self.screen, (25, 180, 150, 35),"Help")
+        self.openFile_button = RoundButton(self.screen, (25, 10, 150, 35),(0, 128, 255),"Select File")
+        self.resetObj_button = RoundButton(self.screen, (25, 140, 150, 35),(0, 128, 255),"Reset object")
+        self.showHelp_button = RoundButton(self.screen, (25, 180, 150, 35),(0, 128, 255),"Help")
+        self.rotateX_checkbox = RoundButton(self.screen, (130, 50, 25, 25), (220, 220, 220), '', 0)
+        self.rotateY_checkbox = RoundButton(self.screen, (130, 80, 25, 25), (220, 220, 220), '', 0)
+        self.rotateZ_checkbox = RoundButton(self.screen, (130, 110, 25, 25), (220, 220, 220), '', 0)
+
+        # Buttons dictionary for dynamic handling
+        self.buttons = [self.rotateX_checkbox, self.rotateY_checkbox, self.rotateZ_checkbox,
+                        self.resetObj_button, self.openFile_button, self.showHelp_button
+        ]
 
         self.font = pg.font.Font(None, 30)
         self.script_dir = os.path.dirname(__file__)
@@ -65,7 +71,21 @@ class Renderer:
         self.skybox_image = pg.image.load(skybox_path)
         self.skybox_image = pg.transform.scale(self.skybox_image, (900, 600))
         self.create_objects()
-        
+
+    def handle_button_click(self, button):
+        if button == self.resetObj_button:
+            self.object.reset()
+        elif button == self.openFile_button:
+            self.open_new_file()
+        elif button == self.showHelp_button:
+            self.show_help = not self.show_help
+        elif button == self.rotateX_checkbox:
+            self.rotateX_checked = not self.rotateX_checked
+        elif button == self.rotateY_checkbox:
+            self.rotateY_checked = not self.rotateY_checked
+        elif button == self.rotateZ_checkbox:
+            self.rotateZ_checked = not self.rotateZ_checked
+
     def create_objects(self):
         """
         Initialize the 3D objects in the scene.
@@ -166,6 +186,23 @@ class Renderer:
         self.screen.blit(self.skybox_image, (0, 0))
         self.object.draw(self.rotateX_checked, self.rotateY_checked, self.rotateZ_checked)
 
+    def draw_checkboxes(self):
+        """
+        Draw the checkboxes and a checkmark if a checkbox is checked
+        """
+        self.rotateX_checkbox.draw()
+        self.rotateY_checkbox.draw()
+        self.rotateZ_checkbox.draw()
+
+        for checkbox, checked in zip([self.rotateX_checkbox, self.rotateY_checkbox, self.rotateZ_checkbox], 
+                                     [self.rotateX_checked, self.rotateY_checked, self.rotateZ_checked]):
+            pg.draw.rect(self.screen, 'black', checkbox.rect, 2)
+            if checked:
+                pg.draw.line(self.screen, 'black', (checkbox.rect.left + 5, checkbox.rect.centery),
+                             (checkbox.rect.centerx - 5, checkbox.rect.bottom - 5), 2)
+                pg.draw.line(self.screen, 'black', (checkbox.rect.centerx - 5, checkbox.rect.bottom - 5),
+                             (checkbox.rect.right - 5, checkbox.rect.top + 5), 2)
+
     def run(self):
         """
         Main rendering loop for the application.
@@ -181,64 +218,26 @@ class Renderer:
                     pg.quit()
                     sys.exit()
                 elif event.type == pg.MOUSEBUTTONDOWN:
-                    if self.rotateX_checkbox_rect.collidepoint(event.pos):
-                        self.rotateX_checked = not self.rotateX_checked
-                    elif self.rotateY_checkbox_rect.collidepoint(event.pos):
-                        self.rotateY_checked = not self.rotateY_checked
-                    elif self.rotateZ_checkbox_rect.collidepoint(event.pos):
-                        self.rotateZ_checked = not self.rotateZ_checked
-                    elif self.resetObj_button.rect.collidepoint(event.pos):
-                        self.object.reset()
-                    elif self.openFile_button.rect.collidepoint(event.pos):
-                        self.open_new_file()
-                    elif self.showHelp_button.rect.collidepoint(event.pos):
-                        if self.show_help:
-                            self.show_help = False
-                        else: 
-                            self.show_help = True
+                    for i, button in enumerate(self.buttons):
+                        if button.rect.collidepoint(event.pos):
+                            self.handle_button_click(button)
                 elif event.type == pg.MOUSEMOTION:
-                    if self.openFile_button.rect.collidepoint(event.pos):
-                        self.openFile_button.is_hovered = True
-                    else:
-                        self.openFile_button.is_hovered = False
-                    if self.resetObj_button.rect.collidepoint(event.pos):
-                        self.resetObj_button.is_hovered = True
-                    else:
-                        self.resetObj_button.is_hovered = False
-                    if self.showHelp_button.rect.collidepoint(event.pos):
-                        self.showHelp_button.is_hovered = True
-                    else:
-                        self.showHelp_button.is_hovered = False
-
+                    for i, button in enumerate(self.buttons):
+                        button.is_hovered = button.rect.collidepoint(event.pos)
 
             # Drawing the checkboxes
-            pg.draw.rect(self.screen, 'gray', self.rotateX_checkbox_rect, 0)
-            pg.draw.rect(self.screen, 'black', self.rotateX_checkbox_rect, 2)
-            pg.draw.rect(self.screen, 'gray', self.rotateY_checkbox_rect, 0)
-            pg.draw.rect(self.screen, 'black', self.rotateY_checkbox_rect, 2)
-            pg.draw.rect(self.screen, 'gray', self.rotateZ_checkbox_rect, 0)
-            pg.draw.rect(self.screen, 'black', self.rotateZ_checkbox_rect, 2)
+            self.rotateX_checkbox.draw()
+            self.rotateY_checkbox.draw()
+            self.rotateZ_checkbox.draw() 
+            pg.draw.rect(self.screen, 'black', self.rotateX_checkbox.rect, 2)
+            pg.draw.rect(self.screen, 'black', self.rotateY_checkbox.rect, 2)
+            pg.draw.rect(self.screen, 'black', self.rotateZ_checkbox.rect, 2)
+
             self.draw_text("Rotate (x) ", (255, 255, 255), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 40))
             self.draw_text("Rotate (y) ", (255, 255, 255), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 70))
             self.draw_text("Rotate (z)", (255, 255, 255), (self.openFile_button.rect.x + 5, self.openFile_button.rect.y + 100))
             
-            # Drawing the checkmark if the checkbox is checked
-            if self.rotateX_checked:
-                pg.draw.line(self.screen, 'black', (self.rotateX_checkbox_rect.left + 5, self.rotateX_checkbox_rect.centery),
-                                (self.rotateX_checkbox_rect.centerx - 5, self.rotateX_checkbox_rect.bottom - 5), 2)
-                pg.draw.line(self.screen, 'black', (self.rotateX_checkbox_rect.centerx - 5, self.rotateX_checkbox_rect.bottom - 5),
-                                (self.rotateX_checkbox_rect.right - 5, self.rotateX_checkbox_rect.top + 5), 2)
-            if self.rotateY_checked:
-                pg.draw.line(self.screen, 'black', (self.rotateY_checkbox_rect.left + 5, self.rotateY_checkbox_rect.centery),
-                                (self.rotateY_checkbox_rect.centerx - 5, self.rotateY_checkbox_rect.bottom - 5), 2)
-                pg.draw.line(self.screen, 'black', (self.rotateY_checkbox_rect.centerx - 5, self.rotateY_checkbox_rect.bottom - 5),
-                                (self.rotateY_checkbox_rect.right - 5, self.rotateY_checkbox_rect.top + 5), 2)
-            if self.rotateZ_checked:
-                pg.draw.line(self.screen, 'black', (self.rotateZ_checkbox_rect.left + 5, self.rotateZ_checkbox_rect.centery),
-                                (self.rotateZ_checkbox_rect.centerx - 5, self.rotateZ_checkbox_rect.bottom - 5), 2)
-                pg.draw.line(self.screen, 'black', (self.rotateZ_checkbox_rect.centerx - 5, self.rotateZ_checkbox_rect.bottom - 5),
-                                (self.rotateZ_checkbox_rect.right - 5, self.rotateZ_checkbox_rect.top + 5), 2)
-                
+            self.draw_checkboxes()
             #Drawing the help text if Help button is pressed
             if self.show_help:
                 lines = ["Controls:", "W - move forward", "A - move left", "S - move backward", 
@@ -253,7 +252,7 @@ class Renderer:
             self.resetObj_button.draw()
             self.showHelp_button.draw()
 
-            #Drawing labels
+            #Drawing informational text
             self.draw_text("Discovered material count: " + str(self.object.materials_count), 
                            (255, 255, 255), 
                            (self.openFile_button.rect.x + 560, self.openFile_button.rect.y + 5))

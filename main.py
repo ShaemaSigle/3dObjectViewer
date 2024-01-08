@@ -44,12 +44,6 @@ class Renderer:
         self.FPS = 60
         self.screen = pg.display.set_mode(self.RES)
         self.clock = pg.time.Clock()
-
-        #Checkboxes
-        # self.rotateX_checkbox_rect = pg.Rect(130, 50, 25, 25)
-        # self.rotateY_checkbox_rect = pg.Rect(130, 80, 25, 25)
-        # self.rotateZ_checkbox_rect = pg.Rect(130, 110, 25, 25)
-
         self.show_help, self.rotateX_checked, self.rotateY_checked, self.rotateZ_checked  = False, False, False, False
         
         #Buttons
@@ -73,6 +67,18 @@ class Renderer:
         self.create_objects()
 
     def handle_button_click(self, button):
+        """
+        Handle button clicks.
+
+        Parameters:
+        - button: The button object clicked.
+
+        Actions:
+        - Reset the object if the reset button is clicked.
+        - Open a new file if the open file button is clicked.
+        - Toggle the help display if the show help button is clicked.
+        - Toggle the corresponding boolean attribute for checkboxes (rotateX, rotateY, rotateZ).
+        """
         if button == self.resetObj_button:
             self.object.reset()
         elif button == self.openFile_button:

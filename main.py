@@ -248,7 +248,8 @@ class Renderer:
             if self.show_help:
                 lines = ["Controls:", "W - move forward", "A - move left", "S - move backward", 
                          "D - move right", "Q - move up", "E - move down", "R - reset camera",
-                         "Arrow keys rotate the camera accordingly", "Hide this text by pressing the Help button"]
+                         "Arrow keys rotate the camera accordingly", "Hide this text by pressing the Help button",
+                         "If .fbx object is too small, open the created .obj"]
                 sk = 20
                 for line in lines:
                     sk+=20
